@@ -1,0 +1,241 @@
+Everything on Docker Hub is an Image not a COntainer.
+
+containers live in a repository. 
+
+Given these components to be used on a single project:
+	<component> - <image>
+	---------------------
+ 	Webserver - nodejs
+	Database - mongoDB
+	Messaging - Redis
+	Orchestration - Ansible
+
+Why you need docker:
+1. reduce setup time 
+2. solve compatibility issues
+3. have different os/test environments
+
+What can docker do ?
+1. containerize applications : allows different version requirements on the of applications  run on the same local environment
+ 
+2. run every component in its own CONTAINER and its own lib and each with their own dependancies in a single OS/VM
+	#the docker configuration is built only once and all the devs get started with a simple docker run <image>
+
+Containers: A way to package all deps and configurations
+All share an OS kernel.... but have different Processes, Networks, Mounts
+
+Operating System Setup:
+
+			Ubuntu CentOS Fedora : Softwares
+		--------------------------------------------
+		OS Kernel : common for all flavours -> linux
+		
+		
+Docker Setup:		
+			Ubuntu Fedora Mint CentOS : Containers
+			 each container has a unique lib/dependancy
+			-------------------------------------------
+					Docker
+			-------------------------------------------
+				      OS Ubuntu : Software [HOST]
+		  	-------------------------------------------
+		  	OS Kernel : linux | Hardware Infrastructure
+
+Docker softwares, will utilize the KERNEL of the docker host, in this case its linux. Therefore you cannot run a windows Software.	Therefore, we require a windows host on cloud.
+
+Docker unlike hypervisers -> packages and containerizes applications, to ship them and have them run anywhere any time. 
+
+
+DOCKER HUB - Public Docker Repository.
+
+incase you run an image/instance and it fails, just destroy that and run a new one
+
+docker file -> contains a list of requirements to create a docker image
+image -> templates for creating containers
+containers -> running images that are isolated and run independently
+
+
+	-----images run on any host with docker installed on it-----
+		therefore the image runs the same everywhere
+		-> its the image that is therefore deployed.
+
+
+DOCKER: Commnuity Edition
+Available for Linux | AWS : MAC, Windows, Azure
+
+Commands: 
+docker run
+docker ps : list running containers and the basic information
+docker ps -a : all running plus previously stopped
+
+docker images : check the available and running images
+
+docker stop <name of the container> : stop all
+
+docker rm <> : removes the container
+
+docker images : lists all images
+docker rmi <> : deletes an image: but all containers must be stopped first
+
+docker run nginx : both pulls and downloads the image
+docker pull nginx -> does not download the image , it only pulls it
+
+#to remove all running containers:
+docker rm $(docker ps -aq)
+#to stop all
+docker stop $(docker ps -aq)
+
+to change the name of an image
+run the image in a detached mode,
+docker run -d --name <new_name> <original_image_name>
+
+A container only lives as long as the process inside it is alive, otherwise it exists
+
+Containers can be run in detach mode: sudo docker run -d <name of the image>
+The detach mode runs in the baskground.
+
+to attach it -> run the attach image\container ID: Advantage of using the container ID is that you only specify a few initial numbers of the ID: they are unique
+
+RUN::::::::
+
+INTERACT: with docker, -> let a container listens and wait for inputs, use the -i : interactive mode
+docker run -i <image_name>
+#to make use of dockers terminal during an interactive session and not our terminal:
+docker run -it <image_name>
+
+PORT MAPPING:
+map port inside the docker container with a free port on the docker host.: this allows one to access contents of a docker host outside the docker host/engine.
+
+docker run -p 80:5000 -> kodekloud/webapp -> all traffic from 80 is routed to 5000: therefore can be externally accessed.
+
+docker run -p new:old <image_name>
+
+it allows running multiple instances of our application and map them to different hosts. 
+
+VOLUME MAPPING: 
+Avoid loss of data map a directory outside the container on a container host into a directory inside the container
+Data persistence : continuance of an effect after its cause is removed. Data survives after the process in which it was created ended.
+This means this data has to be written in a non volatile storage.
+
+docker run -v /opt/datadir:/var/lib/mysql mysql
+docker run -v <dir_outside_the_conatiner_host>:<dir_iniside_the_cont_host> <image_name>
+
+the new directory remains even if the container is deleted.
+
+INSPECTING the container:
+docker inspect <container_name/ID>
+ returns all the details of a container in a JSON file
+
+
+Container LOGS:
+incase you run your container in a detached mode
+docker logs <container_name/ID>
+
+Environment Variables: 
+
+allow changing variables w/out changing the entire application code
+to run multiple instances of the container using different variables
+docker run -e <variable> <image_name>
+the environments are found when inspecting
+
+
+--------------------------- IMAGES ------------------------
+CREATING AN IMAGE:
+reasons to create: does not exist or for ease of shipping/deployment
+
+----------------------------------------------------------------------------------------------------------------
+Containers:  are running environments for an image(s)
+	     layers of images: that are only updates upon download if they did not exist aforehand
+	    most run on a linux base e.g. alpine: alpine is small
+	    containers have ports
+	    
+Images: 
+	these are actual packages, they contain configurations file, start scripts	    
+	they are artifacts that can be moved around
+	
+to restart a docker:
+	1. docker stop cont_ID
+	2. docker start cont_ID 
+	    
+	    
+	    PORT vs HOST 
+HOST: this is our laptop
+docker run -p<port_of_myhost>:<portof_whatever>
+
+DEBUGGING.
+
+To create a new container from a previous image : images are what we pull from the docker hub.
+
+docker run -d -p6000:<port> --name <new_name> <previous_image>
+docker logs - checks the logs
+
+DOCKER EXEC - open the terminal of a running container directly
+docker exec -it <cont_ID> /bin/bash
+pwd - prints the directory we are in.
+			
+
+NOTE: Docker start - for containers to be restarted
+      Docker run - for images to create a container	  
+
+
+DEMO PROJECT OVERVIEW/WORKFLOW.
+
+	Developing a JavaScript App on my local environment
+	Uses a MongoDB Database : instead of installing the DB, I use a docker container
+	Connect my JS to MongoDB
+	
+	1. Having developed it locally
+	2. Commit my JS App to a version control sys for others to test - Github
+	3. Having pre-configured a jenkins Continuos Intergration/Development is triggered
+	4. Jenkins build artefacts from my project
+	5. Artefact is pushed to a private docker repository
+	6. Docker image is deployed on a docker server as INSTRUCTED IN A SCRIPT.
+	
+	
+DEMO PROJECT: Developing with Containers
+
+	1. JS and Nodejs application <backend>
+	2. Connect to a Docker Container with a MongoDB database.
+	
+	> Frontend/Backend: HTML, JS, NodeJS -> localhost:3000/my-app
+	> To integrate to a DB: MongoDB Container
+	> To make interactions easier / not use the terminal: Deploy MongoExpress [UI-container]: from here we can see, DB structure and all the updates our container is making in the DB. -> localhost:8081/db/my-db
+	
+	DOCKER NETWORK
+Docker creates an isolated docker network where containers run in.
+Containers inside this network communicate with each other using names
+
+1. create network for the mongo-DB/UI
+	docker network create <name_of_a_network>
+	
+	for express to connect to the DB,we need a user name and password
+2. Start MongoDB	
+	docker run -d \ : start in dettached mode
+> -p 27017:27017 \ : open host port
+> -e MONGO_INITDB_ROOT_USERNAME=mongoadmin \ : username for mongodb
+> -e MONGO_INITDB_ROOT_PASSWORD=secret \ : password for mongodb
+> --name mongodb \ : overwrite the name of the container
+> --net mongo-network \ : container runs in mongo network
+> mongo : name of the image
+
+3. Start Mongo_Express
+-> should connect to the mongodb container on startup
+	
+	docker run -d \
+> -p 8081:8081 \ : run on our local port 8081
+> -e ME_CONFIG_MONGODB_ADMINUSERNAME=mongoadmin \
+> -e ME_CONFIG_MONGODB_ADMINPASSWORD=secret \
+> --net mongo-network \
+> --name mongo-express \ : overwite name of the container
+> -e ME_CONFIG_MONGODB_SERVER=mongodb \ : define the serverDB name its to run on
+> mongo-express : name of the image
+
+Create a mongo express DB from the UI: Mongo Express server listening at http://0.0.0.0:8081
+
+4. Connect our NodeJS to the Database : Done by <see code>
+	
+
+
+
+
+
